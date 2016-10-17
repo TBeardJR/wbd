@@ -12,7 +12,7 @@ class Angle():
     def setDegrees(self, degrees=0):
         if(not(isinstance(degrees, int)) and not(isinstance(degrees, float))):
             raise ValueError("Angle.setDegrees:  degrees must be of type int or a float.")
-        self.degrees = degrees % 360
+        self.degrees = round(degrees, 9) % float(360)
         return self.degrees    
     
     def setDegreesAndMinutes(self, angleString):
@@ -24,6 +24,7 @@ class Angle():
             raise ValueError("Angle.setDegreesAndMinutes:  angleString does not fit the required format")
         
         self.degrees = int(angleStringMatchObject.group(1)) % 360
+        self.degrees = float(self.degrees)
         try:
             minutes = int(angleStringMatchObject.group(2))
         except:
@@ -31,24 +32,30 @@ class Angle():
             
         self.degrees+= float(float(minutes) / 60)
         
-        return self.degrees
+        return round(self.degrees, 9)
         
     
-    def add(self, angle):
+    def add(self, angle=None):
+        if(angle == None):
+            raise ValueError("Angle.add:  angle is null")
         if(not(isinstance(angle, Angle))):
             raise ValueError("Angle.add:  angle is not of type Angle")
         self.degrees+= angle.getDegrees() 
         self.degrees%= 360
         return self.degrees
     
-    def subtract(self, angle):
+    def subtract(self, angle=None):
+        if(angle == None):
+            raise ValueError("Angle.subtract:  angle is null")
         if(not(isinstance(angle, Angle))):
             raise ValueError("Angle.subtract:  angle is not of type Angle")
         self.degrees-= angle.getDegrees() 
         self.degrees%= 360
         return self.degrees
     
-    def compare(self, angle):
+    def compare(self, angle=None):
+        if(angle == None):
+            raise ValueError("Angle.compare:  angle is null")
         if(not(isinstance(angle, Angle))):
             raise ValueError("Angle.compare:  angle is not of type Angle")
         if(self.getDegrees() > angle.getDegrees()):
@@ -63,4 +70,4 @@ class Angle():
         return str(int(self.degrees)) + "d" + str(round(minutes, 1))
     
     def getDegrees(self):
-        return self.degrees
+        return round(self.degrees, 9)
