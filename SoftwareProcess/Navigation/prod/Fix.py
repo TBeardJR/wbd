@@ -153,9 +153,9 @@ class Fix():
         return Path.abspath(starFile)
         
    
-    def getSightingFile(self):
+    def getSightings(self):
         if(self.sightingFileName == None):
-            raise ValueError("Fix.getSightingFile:  no sighting file has been set.")
+            raise ValueError("Fix.getSightings:  no sighting file has been set.")
         if(self.starFile == None):
             raise ValueError("Fix.getSightings:  Star file not set.")
         if(self.ariesFile == None):

@@ -453,9 +453,9 @@ class FixTest(unittest.TestCase):
     def testGetSightingFile_SightingFileNotSet_ShouldThrowValueError(self):
         logFileName = "logFile.txt"
         fix = Fix.Fix(logFileName)        
-        expectedDiag =  "Fix.getSightingFile:  no sighting file has been set."
+        expectedDiag =  "Fix.getSightings:  no sighting file has been set."
         with self.assertRaises(ValueError) as context:
-            fix.getSightingFile()
+            fix.getSightings()
         self.assertEquals(expectedDiag, context.exception.args[0][0:len(expectedDiag)]) 
         
     def testGetSightingFile_StarFileNotSet_ShouldThrowValueError(self):
@@ -471,7 +471,7 @@ class FixTest(unittest.TestCase):
         sightingFile.close()     
         fix.setSightingFile(sightingFileName)
         with self.assertRaises(ValueError) as context:
-            fix.getSightingFile()
+            fix.getSightings()
         self.assertEquals(expectedDiag, context.exception.args[0][0:len(expectedDiag)]) 
         
     def testGetSightingFile_AriesFileNotSet_ShouldThrowValueError(self):
@@ -493,7 +493,7 @@ class FixTest(unittest.TestCase):
         starFile.close()
         fix.setStarFile(starFileName)        
         with self.assertRaises(ValueError) as context:
-            fix.getSightingFile()
+            fix.getSightings()
         self.assertEquals(expectedDiag, context.exception.args[0][0:len(expectedDiag)]) 
         
     def testGetSightingFile_MissingMandatoryTags_ShouldThrowValueError(self):
@@ -521,7 +521,7 @@ class FixTest(unittest.TestCase):
         ariesFile.close()
         fix.setAriesFile(ariesFileName)
         with self.assertRaises(ValueError) as context:
-            fix.getSightingFile()
+            fix.getSightings()
         self.assertEquals(expectedDiag, context.exception.args[0][0:len(expectedDiag)]) 
         
     
@@ -572,7 +572,7 @@ class FixTest(unittest.TestCase):
         ariesFile.close()
         fix.setAriesFile(ariesFileName)
         
-        fix.getSightingFile()
+        fix.getSightings()
         logFile = open(logFileName, "r")
         firstLine = logFile.readline().rstrip()
         secondLine = logFile.readline().rstrip()
@@ -631,7 +631,7 @@ class FixTest(unittest.TestCase):
         ariesFile.close()
         fix.setAriesFile(ariesFileName)
         
-        fix.getSightingFile()
+        fix.getSightings()
         logFile = open(logFileName, "r")
         firstLine = logFile.readline().rstrip()
         secondLine = logFile.readline().rstrip()
@@ -700,7 +700,7 @@ class FixTest(unittest.TestCase):
         ariesFile.close()
         fix.setAriesFile(ariesFileName)
         
-        fix.getSightingFile()
+        fix.getSightings()
         logFile = open(logFileName, "r")
         firstLine = logFile.readline().rstrip()
         secondLine = logFile.readline().rstrip()
@@ -768,7 +768,7 @@ class FixTest(unittest.TestCase):
         fix.setStarFile(starFileName)
         fix.setAriesFile(ariesFileName)
         
-        fix.getSightingFile()
+        fix.getSightings()
         logFile = open(logFileName, "r")
         firstLine = logFile.readline().rstrip()
         secondLine = logFile.readline().rstrip()
