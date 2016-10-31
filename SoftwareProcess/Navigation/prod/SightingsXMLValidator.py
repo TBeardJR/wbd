@@ -7,10 +7,11 @@ Created on Oct 16, 2016
 import re
 
 class SightingsXMLValidator():
-    def __init__(self):
-        '''
-        Constructor
-        '''
+    def __init__(self, lengthOfSightings):
+        self.invalid = False
+        self.sightingErrors = [False]*lengthOfSightings
+        self.numberOfSightingErrors = 0
+        
     def getElements(self, sightings, attributeName):
         values = []
         for sighting in sightings:
@@ -22,43 +23,51 @@ class SightingsXMLValidator():
         return values
     
     def validateElements(self, elements, validatorFunction):
+        counter = 0;
         for element in elements:
             nodes = element.childNodes
-            for node in nodes:
-                if node.nodeType == node.TEXT_NODE:
-                    validatorFunction(str(node.data))
+            if(self.sightingErrors[counter] == False):
+                for node in nodes:
+                    if node.nodeType == node.TEXT_NODE:
+                        validatorFunction(str(node.data))
+                        if(self.invalid == True):
+                            self.sightingErrors[counter] = self.invalid
+                            self.invalid = False    
+                            self.numberOfSightingErrors+=1                    
+                            break
+            counter+=1
     
     def validateDate(self, date):
         matchObject = re.match(r'^\d{4}-\d{2}-\d{2}$', date)  
         if(matchObject == None):
-            raise ValueError("Fix.getSightings:  Invalid date. Must be of format yyyy-mm-dd.")   
+            self.invalid = True   
         
     def validateTime(self, time):
         matchObject = re.match(r'^\d{2}:\d{2}:\d{2}$', time)  
         if(matchObject == None):
-            raise ValueError("Fix.getSightings: Invalid time Must be of format hh:mm:ss.")  
+            self.invalid = True  
         
     def validateObservation(self, oberservation):
         matchObject = re.match(r'^(\d+)d(\d+\.\d+)$', oberservation)  
         if(matchObject == None):
-            raise ValueError("Fix.getSightings: Invalid Observation string. Must be of form xdy.y")
+            self.invalid = True
         x = int(matchObject.group(1))
         y = float(matchObject.group(2))
         if(x < 0 or x > 89):
-            raise ValueError("Fix.getSightings: Invalid Observation string. x must be greater than or equal to 0 and less than 90")  
+            self.invalid = True  
         if(y < 0.0 or y >= 60.0):
-            raise ValueError("Fix.getSightings: Invalid Observation string. x must be greater than or equal to 0.0 and less than 60.0")   
+            self.invalid = True  
         
     def validateHeight(self, height):
         height = float(height)
         if(height < 0.0):
-            raise ValueError("Fix.getSightings: Invalid height. Must be greater than 0")
+            self.invalid = True  
         return height
     
     def validateTemperature(self, temperature):
         temperature = int(temperature)
         if(temperature < -20 or temperature > 120):
-            raise ValueError("Fix.getSightings: Invalid temperature. Must be greater than or equal to -20 and less than or equal to 120")
+            self.invalid = True  
         return temperature
     
     def validatePressure(self, pressure):
