@@ -153,7 +153,40 @@ class Fix():
         return Path.abspath(starFile)
         
    
-    def getSightings(self):
+    def getSightings(self, assumedLatitude="0d0.0", assumedLongitude="0d0.0"):
+        if(not(isinstance(assumedLatitude, basestring))):
+            raise ValueError("Fix.getSightings:  Invalid assumeLatitude. Must be a string.")
+        assumedLatitudeMatchObject = re.match(r'^([NS])?(-?[0-9]+)d([0-9]+(\.[0-9])?)$', assumedLatitude)
+        if(assumedLatitudeMatchObject == None):
+            raise ValueError("Fix.getSightings:  Invalid assumedLatitude form. Must be of form hxdy.y or (if h is missing) xdy.y.")
+        h = "";
+        xLatitudeValue = int(assumedLatitudeMatchObject.group(2))
+        yLatitudeValue = float(assumedLatitudeMatchObject.group(3))
+        if(assumedLatitudeMatchObject.group(1) == None):            
+            if(xLatitudeValue != 0 or yLatitudeValue != 0.0):
+                raise ValueError("Fix.getSightings:  Invalid assumedLatitude. Must be 0d0.0 if h is missing.")
+        else:
+            h = str(assumedLatitudeMatchObject.group(1))
+        
+        if(h != "" and h != "N" and h != "S"):
+            raise ValueError("Fix.getSightings:  Invalid h. Must be 'N', 'S' or empty string")
+        if(xLatitudeValue < 0 or xLatitudeValue >= 90):
+            raise ValueError("Fix.getSightings:  Invalid x in assumedLatitude. Must be in range 0 <= x < 90")
+        if(yLatitudeValue < 0.0 or yLatitudeValue >= 60.0):
+            raise ValueError("Fix.getSightings:  Invalid y in assumedLatitude. Must be in range 0.0 <= y < 60.0")
+        
+        if(not(isinstance(assumedLongitude, basestring))):
+            raise ValueError("Fix.getSightings:  Invalid assumedLongitude. Must be a string.")
+        assumedLongitudeMatchObject = re.match(r'^(-?[0-9]+)d([0-9]+(\.[0-9])?)$', assumedLongitude)
+        if(assumedLongitudeMatchObject == None):
+            raise ValueError("Fix.getSightings:  Invalid assumedLongitude form. Must be of form xdy.y.")
+        xLongitudeValue = int(assumedLongitudeMatchObject.group(1))
+        yLongitudeValue = float(assumedLongitudeMatchObject.group(2))
+        if(xLongitudeValue < 0 or xLongitudeValue >= 360):
+            raise ValueError("Fix.getSightings:  Invalid x in assumedLongitude. Must be in range 0 <= x < 360")
+        if(yLongitudeValue < 0.0 or yLongitudeValue >= 60.0):
+            raise ValueError("Fix.getSightings:  Invalid y in assumedLongitude. Must be in range 0.0 <= y < 60.0")
+          
         if(self.sightingFileName == None):
             raise ValueError("Fix.getSightings:  no sighting file has been set.")
         if(self.starFile == None):
@@ -187,9 +220,9 @@ class Fix():
         validator.validateElements(pressures, validator.validatePressure)
         
         currentISODate = date.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S%z")
-        myLogFile = open(self.logFile, "a+") # Open file for appending and reading
-        myLogFile.write("LOG: " + currentISODate + "-06:00 Start of sighting file: " + self.sightingFileName + "\n")
-        myLogFile.close() 
+        
+        
+        adjustedAltitude = 0.0
         
         for i in range(len(sightings)):
             if(validator.sightingErrors[i] == False):
@@ -202,15 +235,93 @@ class Fix():
                 sightingList.append(sighting)
                 
         sightingList = sorted(sightingList, key=attrgetter('_Sighting__theDate'))
+        sum1 = 0
+        sum2 = 0
                 
         for sighting in sightingList:
-            self.__calculateGeographicalPosition(self.starFile, sighting, self.ariesFile, validator)
+            geographicPositionLatitude, geographicPositionLongitude = self.__calculateGeographicalPosition(self.starFile, sighting, self.ariesFile, validator)
+            if(geographicPositionLatitude != "" and geographicPositionLongitude != ""):
+                adjustedDistance = self.__calculateAdjustedDistance(geographicPositionLatitude, geographicPositionLongitude, assumedLatitude, assumedLongitude, adjustedAltitude)
+                azimuthAdjustment = self.__calculateAzimuthAdjustment(geographicPositionLatitude, assumedLatitude, adjustedDistance)
+                sum1 = sum1 + (adjustedDistance * math.cos(azimuthAdjustment))
+                sum2 = sum2 + (adjustedDistance * math.sin(azimuthAdjustment))
+                angle = Angle.Angle()
+                angle.setDegrees(azimuthAdjustment)
+                myLogFile = open(self.logFile, "a+") 
+                myLogFile.write("LOG: " + str(sighting.get_current_isodate()) + "-06:00 " + str(sighting.get_body()) + " " + str(sighting.get_the_date()) + " " + str(sighting.get_time()) + " " + sighting.get_angle_string() + " " + 
+                                str(geographicPositionLatitude) + " " + str(geographicPositionLongitude) + " " + assumedLatitude + " " + assumedLongitude + " " + angle.getString() + " " + str(adjustedDistance) + "\n")
+                myLogFile.close()
         
-        myLogFile = open(self.logFile, "a+")     
-        myLogFile.write("LOG: " + currentISODate + "-06:00 End of sighting file: " + self.sightingFileName + "\n")  
-        myLogFile.write("LOG: " + currentISODate + "-06:00 Sighting Errors:    " + str(validator.numberOfSightingErrors) + "\n")   
+        
+        assumedLatitude = assumedLatitude[1:]
+        angle = Angle.Angle()
+        angle.setDegreesAndMinutes(assumedLatitude)
+        assumedLatitudeNumerical = angle.getDegrees()
+        angle1 = Angle.Angle()
+        angle1.setDegreesAndMinutes(assumedLongitude)
+        assumedLongitudeNumerical = angle1.getDegrees()
+        
+        approximateLatitude = assumedLatitudeNumerical + (sum1 / 60)
+        approximateLongitude = assumedLongitudeNumerical + (sum2 / 60)
+        approximateLongitudeAngle = Angle.Angle()
+        approximateLongitudeAngle.setDegrees(approximateLongitude)
+        approximateLatitudeAngle = Angle.Angle()
+        approximateLatitudeAngle.setDegrees(approximateLatitude)
+                
+        
+        myLogFile = open(self.logFile, "a+")  
+        myLogFile.write("LOG: " + currentISODate + "-06:00 Sighting Errors:    " + str(validator.numberOfSightingErrors) + "\n") 
+        myLogFile.write("LOG: " + currentISODate + "-06:00 Approximate latitude:    " + h + approximateLatitudeAngle.getString() + "    Approximate longitude:    " + approximateLongitudeAngle.getString() + "\n")  
         myLogFile.close()    
+        
+        return (approximateLatitude, approximateLongitude)
             
+    def __calculateAdjustedDistance(self, geographicPositionLatitude, geographicPositionLongitude, assumedLatitude, assumedLongitude, adjustedAltitude):
+        assumedLatitude = assumedLatitude[1:]
+        assumedLatitudeAngle = Angle.Angle()
+        assumedLatitudeAngle.setDegreesAndMinutes(assumedLatitude)
+        
+        assumedLatitudeNumerical = assumedLatitudeAngle.getDegrees()
+        assumedLongitudeAngle = Angle.Angle()
+        assumedLongitudeAngle.setDegreesAndMinutes(assumedLongitude)        
+        assumedLongitudeNumerical = assumedLongitudeAngle.getDegrees()
+        
+        geographicPositionLongitudeAngle = Angle.Angle()
+        geographicPositionLongitudeAngle.setDegreesAndMinutes(geographicPositionLongitude)        
+        geographicPositionLongitudeNumerical = geographicPositionLongitudeAngle.getDegrees()
+        
+        geographicPositionLatitudeAngle = Angle.Angle()
+        geographicPositionLatitudeAngle.setDegreesAndMinutes(geographicPositionLatitude)
+        geographicPositionLatitdueNumerical = geographicPositionLatitudeAngle.getDegrees()
+        
+        LHA = geographicPositionLongitudeAngle.subtract(assumedLongitudeAngle)
+        
+        correctedAltitude = math.degrees(math.asin((math.sin(math.radians(geographicPositionLatitdueNumerical)) * math.sin(math.radians(assumedLatitudeNumerical)))
+                                      + (math.cos(math.radians(geographicPositionLatitdueNumerical)) * math.cos(math.radians(assumedLatitudeNumerical)) * math.cos(math.radians(LHA)))))
+        
+        angle1 = Angle.Angle()
+        angle1.setDegrees(adjustedAltitude)
+        
+        angle2 = Angle.Angle()
+        angle2.setDegrees(correctedAltitude)
+        
+        
+        adjustedDistance = angle1.subtract(angle2)
+        return round(adjustedDistance, 2)
+    
+    def __calculateAzimuthAdjustment(self, geographicPositionLatitude, assumedLatitude, adjustedDistance):
+        assumedLatitude = assumedLatitude[1:]
+        angle = Angle.Angle()
+        angle.setDegreesAndMinutes(assumedLatitude)
+        assumedLatitudeNumerical = angle.getDegrees()
+        angle2 = Angle.Angle()
+        angle2.setDegreesAndMinutes(geographicPositionLatitude)
+        geographicPositionLatitdueNumerical = angle2.getDegrees()
+        azimuthAdjustment = math.acos((math.sin(math.radians(float(geographicPositionLatitdueNumerical))) - math.sin(math.radians(float(assumedLatitudeNumerical))) - math.sin(math.radians(float(adjustedDistance))))
+                                      / math.cos(math.radians(float(assumedLatitudeNumerical))) * math.cos(math.radians(float(adjustedDistance))))
+       
+        return azimuthAdjustment
+    
     def __calculateAdjustedAltitude(self, horizon, temperature, pressure, height, observedAltitude):
         angle = Angle.Angle()
         angle.setDegreesAndMinutes(observedAltitude)
@@ -258,7 +369,7 @@ class Fix():
                 if(dateObj1 == dateObj2 and int(hours) == int(hour)):
                     greenwichHourAngle1 = angle
                     foundGreenwichHourAngle = True
-        if(foundGreenwichHourAngle == True):
+        if(foundGreenwichHourAngle == True and declination != ""):
             
             s = (int(minutes) * 60) + int(seconds)
             angle1 = Angle.Angle()
@@ -275,12 +386,12 @@ class Fix():
             degreesLongitude = greenwichHourAngle.add(sideHourAngle)
             greenwichHourAngleObservation = Angle.Angle()
             greenwichHourAngleObservation.setDegrees(degreesLongitude)
-            myLogFile = open(self.logFile, "a+") 
-            myLogFile.write("LOG: " + str(sighting.get_current_isodate()) + "-06:00 " + str(sighting.get_body()) + " " + str(sighting.get_the_date()) + " " + str(sighting.get_time()) + " " + sighting.get_angle_string() + " " + 
-                            declination + " " + greenwichHourAngleObservation.getString() + "\n")
-            myLogFile.close()
+            return (declination, greenwichHourAngleObservation.getString())
+            
         else:
             validator.numberOfSightingErrors+=1
+            
+        return ("", "")
             
             
     def __setSightingAttributes(self, sightings, index):

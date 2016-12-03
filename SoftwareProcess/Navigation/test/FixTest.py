@@ -791,3 +791,202 @@ class FixTest(unittest.TestCase):
         logFile.close()
         OS.remove("logFile.txt")
         
+    def testGetSightingFile_AssumedLatitudeNotAString_ShouldThrowValueError(self):
+        logFileName = "logFile.txt"
+        sightingFileName = "sighting.xml"
+        starFileName = "star.txt"
+        ariesFileName = "ariesTest.txt"
+        expectedDiag =  "Fix.getSightings:  Invalid assumeLatitude. Must be a string."
+        fix = Fix.Fix(logFileName)  
+        sightingFile = open(sightingFileName, "a+") # Open file for appending and reading
+        sightingFile.write("<fix>")
+        sightingFile.write("<sighting>")
+        sightingFile.write("</sighting>")
+        sightingFile.write("</fix>")
+        sightingFile.close()     
+        fix.setSightingFile(sightingFileName)
+        starFile = open(starFileName, "a+") 
+        starFile.write("Sirius    01/01/17    258d31.7    -16d44.3\n")
+        starFile.write("Rigel    01/01/17    360d60.0    -61d60.0\n")
+        starFile.close()
+        fix.setStarFile(starFileName)
+        ariesFile = open(ariesFileName, "a+") 
+        ariesFile.write("04/11/17    19    125d25.2\n")
+        ariesFile.write("04/11/17    23    140d27.7\n")
+        ariesFile.close()
+        fix.setAriesFile(ariesFileName)
+        with self.assertRaises(ValueError) as context:
+            fix.getSightings(4325234, "N1d1.1")
+        self.assertEquals(expectedDiag, context.exception.args[0][0:len(expectedDiag)])
+        
+    def testGetSightingFile_AssumedLatitudeNotInCorrectForm_ShouldThrowValueError(self):
+        logFileName = "logFile.txt"
+        sightingFileName = "sighting.xml"
+        starFileName = "star.txt"
+        ariesFileName = "ariesTest.txt"
+        expectedDiag =  "Fix.getSightings:  Invalid assumedLatitude form. Must be of form hxdy.y or (if h is missing) xdy.y."
+        fix = Fix.Fix(logFileName)  
+        sightingFile = open(sightingFileName, "a+") # Open file for appending and reading
+        sightingFile.write("<fix>")
+        sightingFile.write("<sighting>")
+        sightingFile.write("</sighting>")
+        sightingFile.write("</fix>")
+        sightingFile.close()     
+        fix.setSightingFile(sightingFileName)
+        starFile = open(starFileName, "a+") 
+        starFile.write("Sirius    01/01/17    258d31.7    -16d44.3\n")
+        starFile.write("Rigel    01/01/17    360d60.0    -61d60.0\n")
+        starFile.close()
+        fix.setStarFile(starFileName)
+        ariesFile = open(ariesFileName, "a+") 
+        ariesFile.write("04/11/17    19    125d25.2\n")
+        ariesFile.write("04/11/17    23    140d27.7\n")
+        ariesFile.close()
+        fix.setAriesFile(ariesFileName)
+        with self.assertRaises(ValueError) as context:
+            fix.getSightings("lol", "N1d1.1")
+        self.assertEquals(expectedDiag, context.exception.args[0][0:len(expectedDiag)]) 
+        
+    def testGetSightingFile_AssumedLatitudeBadValue_ShouldThrowValueError(self):
+        logFileName = "logFile.txt"
+        sightingFileName = "sighting.xml"
+        starFileName = "star.txt"
+        ariesFileName = "ariesTest.txt"
+        expectedDiag =  "Fix.getSightings:  Invalid assumedLatitude. Must be 0d0.0 if h is missing."
+        fix = Fix.Fix(logFileName)  
+        sightingFile = open(sightingFileName, "a+") # Open file for appending and reading
+        sightingFile.write("<fix>")
+        sightingFile.write("<sighting>")
+        sightingFile.write("</sighting>")
+        sightingFile.write("</fix>")
+        sightingFile.close()     
+        fix.setSightingFile(sightingFileName)
+        starFile = open(starFileName, "a+") 
+        starFile.write("Sirius    01/01/17    258d31.7    -16d44.3\n")
+        starFile.write("Rigel    01/01/17    360d60.0    -61d60.0\n")
+        starFile.close()
+        fix.setStarFile(starFileName)
+        ariesFile = open(ariesFileName, "a+") 
+        ariesFile.write("04/11/17    19    125d25.2\n")
+        ariesFile.write("04/11/17    23    140d27.7\n")
+        ariesFile.close()
+        fix.setAriesFile(ariesFileName)
+        with self.assertRaises(ValueError) as context:
+            fix.getSightings("1d1.1", "N1d1.1")
+        self.assertEquals(expectedDiag, context.exception.args[0][0:len(expectedDiag)]) 
+        
+        
+    def testGetSightingFile_AssumedLongitudeNotAString_ShouldThrowValueError(self):
+        logFileName = "logFile.txt"
+        sightingFileName = "sighting.xml"
+        starFileName = "star.txt"
+        ariesFileName = "ariesTest.txt"
+        expectedDiag =  "Fix.getSightings:  Invalid assumedLongitude. Must be a string."
+        fix = Fix.Fix(logFileName)  
+        sightingFile = open(sightingFileName, "a+") # Open file for appending and reading
+        sightingFile.write("<fix>")
+        sightingFile.write("<sighting>")
+        sightingFile.write("</sighting>")
+        sightingFile.write("</fix>")
+        sightingFile.close()     
+        fix.setSightingFile(sightingFileName)
+        starFile = open(starFileName, "a+") 
+        starFile.write("Sirius    01/01/17    258d31.7    -16d44.3\n")
+        starFile.write("Rigel    01/01/17    360d60.0    -61d60.0\n")
+        starFile.close()
+        fix.setStarFile(starFileName)
+        ariesFile = open(ariesFileName, "a+") 
+        ariesFile.write("04/11/17    19    125d25.2\n")
+        ariesFile.write("04/11/17    23    140d27.7\n")
+        ariesFile.close()
+        fix.setAriesFile(ariesFileName)
+        with self.assertRaises(ValueError) as context:
+            fix.getSightings("N1d1.1", 987)
+        self.assertEquals(expectedDiag, context.exception.args[0][0:len(expectedDiag)])
+        
+    def testGetSightingFile_AssumedLongitudeNotInCorrectForm_ShouldThrowValueError(self):
+        logFileName = "logFile.txt"
+        sightingFileName = "sighting.xml"
+        starFileName = "star.txt"
+        ariesFileName = "ariesTest.txt"
+        expectedDiag =  "Fix.getSightings:  Invalid assumedLongitude form. Must be of form xdy.y"
+        fix = Fix.Fix(logFileName)  
+        sightingFile = open(sightingFileName, "a+") # Open file for appending and reading
+        sightingFile.write("<fix>")
+        sightingFile.write("<sighting>")
+        sightingFile.write("</sighting>")
+        sightingFile.write("</fix>")
+        sightingFile.close()     
+        fix.setSightingFile(sightingFileName)
+        starFile = open(starFileName, "a+") 
+        starFile.write("Sirius    01/01/17    258d31.7    -16d44.3\n")
+        starFile.write("Rigel    01/01/17    360d60.0    -61d60.0\n")
+        starFile.close()
+        fix.setStarFile(starFileName)
+        ariesFile = open(ariesFileName, "a+") 
+        ariesFile.write("04/11/17    19    125d25.2\n")
+        ariesFile.write("04/11/17    23    140d27.7\n")
+        ariesFile.close()
+        fix.setAriesFile(ariesFileName)
+        with self.assertRaises(ValueError) as context:
+            fix.getSightings("N1d1.1", "d4.77")
+        self.assertEquals(expectedDiag, context.exception.args[0][0:len(expectedDiag)])
+        
+    def testGetSightingFile_LogEverything_ShouldLogEverythingCorrectly(self):
+        logFileName = "logFile.txt"
+        sightingFileName = "sighting.xml"
+        starFileName = "star.txt"
+        ariesFileName = "aries.txt"
+        if(Path.exists("logFile.txt")):
+            OS.remove("logFile.txt")
+        fix = Fix.Fix(logFileName)    
+        if(Path.exists("sighting.xml")):
+            OS.remove("sighting.xml")
+        
+        sightingFile = open(sightingFileName, "a+") # Open file for appending and reading
+        sightingFile.write("<fix>")
+        sightingFile.write("<sighting>")
+        sightingFile.write("<date>2017-04-17</date>")
+        sightingFile.write("<time>10:30:30</time>")
+        sightingFile.write("<observation>00d0.2</observation>")
+        sightingFile.write("<body>Unknown</body>")
+        sightingFile.write("</sighting>")
+        sightingFile.write("<sighting>")
+        sightingFile.write("<date>2017-04-14</date>")
+        sightingFile.write("<time>23:50:14</time>")
+        sightingFile.write("<observation>015d04.9</observation>")
+        sightingFile.write("<body>Pollux</body>")
+        sightingFile.write("<height>6.0</height>")
+        sightingFile.write("<temperature>72</temperature>")
+        sightingFile.write("<pressure>1010</pressure>")
+        sightingFile.write("<horizon>Artificial</horizon>")
+        sightingFile.write("</sighting>")
+        sightingFile.write("</fix>")
+        sightingFile.close()       
+        fix.setSightingFile(sightingFileName)
+        
+        starFile = open(starFileName, "w") 
+        starFile.write("Pollux    01/01/17    243d25.2    27d59.0\n")
+        starFile.close()
+        fix.setStarFile(starFileName)
+        fix.setAriesFile(ariesFileName)
+        
+        fix.getSightings("N27d59.5", "85d33.4")
+        logFile = open(logFileName, "r")
+        firstLine = logFile.readline().rstrip()
+        secondLine = logFile.readline().rstrip()
+        thirdLine = logFile.readline().rstrip()
+        fourthLine = logFile.readline().rstrip()
+        fifthLine = logFile.readline().rstrip()
+        sixthLine = logFile.readline().rstrip()
+        seventhLine = logFile.readline().rstrip()
+        self.assertRegexpMatches(firstLine, r'logFile.txt$')
+        self.assertRegexpMatches(secondLine, r'sighting.xml$')
+        self.assertRegexpMatches(thirdLine, r'star.txt$')
+        self.assertRegexpMatches(fourthLine, r'aries.txt$')
+        self.assertRegexpMatches(fifthLine, r'Pollux 2017-04-14 23:50:14 15d01.5 27d59.1 84d33.4 N27d59.5 85d33.4 292d44.6 174$')
+        self.assertRegexpMatches(sixthLine, r'Sighting Errors:    1$')
+        self.assertRegexpMatches(seventhLine, r'Approximate latitude:    N29d6.8    Approximate longitude:    82d52.9$')
+        logFile.close()
+        OS.remove("logFile.txt")
+        
